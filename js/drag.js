@@ -30,17 +30,18 @@ function initDragDrop() {
         STATE.usedPieceIds.add(pieceId);
         item.classList.add('used');
 
-        // Create placed piece in construction area
+        // Spawn piece at center of build zone so it's always visible,
+        // never hidden behind the palette
         var rect = buildZone.getBoundingClientRect();
-        var x = e.clientX - rect.left - piece.width / 2;
-        var y = e.clientY - rect.top - piece.height / 2;
+        var x = rect.width / 2 - piece.width / 2;
+        var y = rect.height / 2 - piece.height / 2;
 
         var placed = createPlacedPiece(piece, x, y);
         placed.dataset.pieceData = JSON.stringify(piece);
         buildZone.appendChild(placed);
         STATE.placedPieces.push(placed);
 
-        // Start dragging immediately
+        // Start dragging immediately, offset from piece center
         startDrag(placed, e, 'palette');
         updateDoneButton();
     });
@@ -65,9 +66,9 @@ function initDragDrop() {
         var x = e.clientX - rect.left - dragState.offsetX;
         var y = e.clientY - rect.top - dragState.offsetY;
 
-        // Constrain to build zone (loosely)
-        x = Math.max(-50, Math.min(rect.width - 20, x));
-        y = Math.max(-30, Math.min(rect.height - 20, y));
+        // Constrain strictly to build zone - never slip behind palette
+        x = Math.max(0, Math.min(rect.width - 20, x));
+        y = Math.max(0, Math.min(rect.height - 20, y));
 
         dragState.element.style.left = x + 'px';
         dragState.element.style.top = y + 'px';
