@@ -9,16 +9,14 @@
 }
 
 :root {
-    --sky: #87CEEB;
     --paper-cream: #F5F0E1;
     --paper-kraft: #C9B99A;
     --wood-dark: #5D4E37;
     --wood-med: #8B7355;
-    --ground: #C4A882;
-    --ground-dark: #8B7355;
     --accent: #F4A460;
     --accent-hover: #E8944F;
     --success: #6BCB77;
+    --palette-width: 200px;
 }
 
 body {
@@ -28,15 +26,15 @@ body {
     height: 100vh;
     user-select: none;
     -webkit-user-select: none;
+    touch-action: none;
 }
 
-/* ---- GAME LAYOUT ---- */
+/* ---- TOP-LEVEL LAYOUT ---- */
 
 #game {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    min-height: 400px;
 }
 
 /* ---- HEADER ---- */
@@ -80,43 +78,149 @@ body {
     transition: all 0.15s;
     color: var(--wood-dark);
     font-weight: 600;
+    touch-action: manipulation;
 }
 
-.bird-btn:hover {
-    background: #DDD0B8;
-    transform: translateY(-1px);
-}
+.bird-btn:hover { background: #DDD0B8; transform: translateY(-1px); }
+.bird-btn.active { background: var(--accent); border-color: #8B4513; }
+.bird-btn.completed { background: var(--success); border-color: #228B22; }
+.bird-btn.completed.active { background: #5CB868; border-color: #1a7a1a; }
 
-.bird-btn.active {
-    background: var(--accent);
-    border-color: #8B4513;
-}
-
-.bird-btn.completed {
-    background: var(--success);
-    border-color: #228B22;
-}
-
-.bird-btn.completed.active {
-    background: #5CB868;
-    border-color: #1a7a1a;
-}
-
-/* ---- MAIN AREA (scene + construction) ---- */
+/* ---- MAIN: palette LEFT + right-panel RIGHT, true flex siblings ---- */
 
 #main {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     overflow: hidden;
     min-height: 0;
+}
+
+/* ---- PALETTE: left column, structurally separate from canvas ---- */
+
+#palette {
+    width: var(--palette-width);
+    flex-shrink: 0;
+    background: var(--paper-cream);
+    border-right: 4px solid var(--wood-med);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* No z-index needed — flex siblings never overlap */
+}
+
+#palette-header {
+    padding: 8px 10px 6px;
+    border-bottom: 2px solid #E0D5C0;
+    flex-shrink: 0;
+}
+
+#palette-title {
+    font-size: 0.9em;
+    color: var(--wood-dark);
+    text-align: center;
+    margin-bottom: 6px;
+}
+
+#orientation-controls {
+    display: flex;
+    gap: 3px;
+}
+
+.orient-btn {
+    flex: 1;
+    padding: 4px 2px;
+    border: 2px solid var(--wood-med);
+    border-radius: 4px;
+    background: var(--paper-kraft);
+    font-family: inherit;
+    font-size: 0.7em;
+    cursor: pointer;
+    color: var(--wood-dark);
+    font-weight: 600;
+    touch-action: manipulation;
+}
+
+.orient-btn:hover { background: #DDD0B8; }
+.orient-btn.active { background: var(--accent); border-color: #8B4513; }
+
+#parts-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#parts-list::-webkit-scrollbar { width: 5px; }
+#parts-list::-webkit-scrollbar-thumb { background: var(--wood-med); border-radius: 3px; }
+
+/* ---- PALETTE ITEMS ---- */
+
+.part-item {
+    background: white;
+    border: 2px dashed #C0B090;
+    border-radius: 6px;
+    padding: 5px 8px;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    touch-action: none;
+}
+
+.part-item:hover {
+    border-color: #8B4513;
+    border-style: solid;
+    background: #FFF8F0;
+}
+
+.part-item.used {
+    opacity: 0.35;
+    pointer-events: none;
+    border-style: dotted;
+}
+
+.part-preview {
+    width: 52px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.part-preview svg {
+    max-width: 100%;
+    max-height: 100%;
+    filter: url(#paper-edge);
+}
+
+.part-label {
+    font-size: 0.76em;
+    color: var(--wood-dark);
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+/* ---- RIGHT PANEL: scene on top, grass below ---- */
+
+#right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
 }
 
 /* ---- SCENE (sky + trees) ---- */
 
 #scene {
-    flex: 0 0 35%;
-    background: linear-gradient(180deg, #87CEEB 0%, #A8D8EA 50%, #C5E8D0 80%, #7CB342 95%, #558B2F 100%);
+    flex: 0 0 40%;
+    background: linear-gradient(180deg, #87CEEB 0%, #A8D8EA 55%, #C5E8D0 82%, #7CB342 95%, #558B2F 100%);
     position: relative;
     overflow: hidden;
     border-bottom: 3px solid #558B2F;
@@ -128,21 +232,20 @@ body {
     display: block;
 }
 
-/* ---- CONSTRUCTION AREA (full width, no palette beside it) ---- */
+/* ---- CONSTRUCTION AREA (grass — where birds are built) ---- */
 
 #construction-area {
     flex: 1;
     position: relative;
+    /* overflow:hidden is the key — pieces can never bleed into the palette */
+    overflow: hidden;
     background:
         repeating-linear-gradient(
             0deg,
-            transparent,
-            transparent 30px,
-            rgba(0,0,0,0.02) 30px,
-            rgba(0,0,0,0.02) 31px
+            transparent, transparent 28px,
+            rgba(0,0,0,0.025) 28px, rgba(0,0,0,0.025) 29px
         ),
         linear-gradient(180deg, #D4C4A0 0%, #C4B48E 100%);
-    overflow: hidden;
 }
 
 #build-zone {
@@ -150,7 +253,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 40px;
+    bottom: 44px;
 }
 
 #ground-strip {
@@ -158,14 +261,12 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 40px;
+    height: 44px;
     background:
         repeating-linear-gradient(
             90deg,
-            transparent,
-            transparent 10px,
-            rgba(0,0,0,0.03) 10px,
-            rgba(0,0,0,0.03) 11px
+            transparent, transparent 10px,
+            rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.03) 11px
         ),
         linear-gradient(180deg, #7D6B4F, #5D4B33);
     border-top: 3px solid #5D4B33;
@@ -177,7 +278,7 @@ body {
     position: absolute;
     cursor: grab;
     filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.25));
-    transition: filter 0.15s;
+    touch-action: none;
 }
 
 .placed-piece svg {
@@ -197,145 +298,6 @@ body {
     opacity: 0.9;
 }
 
-/* ---- PALETTE (separate strip below construction, never overlaps) ---- */
-
-#palette {
-    flex-shrink: 0;
-    background: var(--paper-cream);
-    border-top: 4px solid var(--wood-med);
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    overflow: hidden;
-    height: 90px;
-}
-
-#palette-header {
-    padding: 4px 10px;
-    border-right: 2px solid #E0D5C0;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 4px;
-    min-width: 110px;
-}
-
-#palette-title {
-    font-size: 0.8em;
-    color: var(--wood-dark);
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-#orientation-controls {
-    display: flex;
-    gap: 2px;
-}
-
-.orient-btn {
-    flex: 1;
-    padding: 3px 2px;
-    border: 2px solid var(--wood-med);
-    border-radius: 3px;
-    background: var(--paper-kraft);
-    font-family: inherit;
-    font-size: 0.65em;
-    cursor: pointer;
-    transition: all 0.15s;
-    color: var(--wood-dark);
-    font-weight: 600;
-}
-
-.orient-btn:hover {
-    background: #DDD0B8;
-}
-
-.orient-btn.active {
-    background: var(--accent);
-    border-color: #8B4513;
-}
-
-#parts-list {
-    flex: 1;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 6px 8px;
-    display: flex;
-    flex-direction: row;
-    gap: 6px;
-    align-items: center;
-}
-
-#parts-list::-webkit-scrollbar {
-    height: 5px;
-}
-
-#parts-list::-webkit-scrollbar-thumb {
-    background: var(--wood-med);
-    border-radius: 3px;
-}
-
-/* ---- PALETTE ITEMS (compact horizontal cards) ---- */
-
-.part-item {
-    background: white;
-    border: 2px dashed #C0B090;
-    border-radius: 6px;
-    padding: 4px 8px;
-    cursor: grab;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    transition: all 0.15s;
-    flex-shrink: 0;
-    min-width: 65px;
-}
-
-.part-item:hover {
-    border-color: #8B4513;
-    border-style: solid;
-    background: #FFF8F0;
-    transform: scale(1.05);
-}
-
-.part-item:active {
-    cursor: grabbing;
-}
-
-.part-item.used {
-    opacity: 0.35;
-    pointer-events: none;
-    border-style: dotted;
-}
-
-.part-preview {
-    width: 50px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.part-preview svg {
-    max-width: 100%;
-    max-height: 100%;
-    filter: url(#paper-edge);
-}
-
-.part-label {
-    font-size: 0.65em;
-    color: var(--wood-dark);
-    font-weight: 600;
-    line-height: 1.1;
-    text-align: center;
-    white-space: nowrap;
-}
-
 /* ---- CONTROLS ---- */
 
 #controls {
@@ -343,44 +305,38 @@ body {
     justify-content: center;
     align-items: center;
     gap: 12px;
-    padding: 6px;
+    padding: 7px;
     background: var(--wood-dark);
     flex-shrink: 0;
 }
 
 .ctrl-btn {
-    padding: 5px 18px;
+    padding: 6px 22px;
     border: 2px solid #3D2E17;
     border-radius: 5px;
     background: var(--paper-kraft);
     font-family: inherit;
-    font-size: 0.9em;
+    font-size: 0.92em;
     cursor: pointer;
-    transition: all 0.15s;
     color: var(--wood-dark);
     font-weight: 700;
+    touch-action: manipulation;
 }
 
-.ctrl-btn:hover {
-    transform: translateY(-1px);
-    background: #DDD0B8;
-}
+.ctrl-btn:hover { background: #DDD0B8; }
 
 .btn-done {
     background: var(--accent);
     color: #4A2800;
-    padding: 5px 24px;
+    padding: 6px 28px;
 }
 
-.btn-done:hover:not(:disabled) {
-    background: var(--accent-hover);
-}
+.btn-done:hover:not(:disabled) { background: var(--accent-hover); }
 
 .btn-done:disabled {
     background: #B0A090;
-    color: #777;
+    color: #888;
     cursor: not-allowed;
-    transform: none;
 }
 
 /* ---- FLYING ANIMATION ---- */
@@ -389,21 +345,14 @@ body {
     position: fixed;
     pointer-events: none;
     z-index: 10000;
-    transition: none;
 }
 
 /* ---- PERCHED BIRDS IN SCENE ---- */
 
-.perched-bird {
-    cursor: pointer;
-    transition: transform 0.3s;
-}
+.perched-bird { cursor: pointer; transition: transform 0.3s; }
+.perched-bird:hover { transform: scale(1.15); }
 
-.perched-bird:hover {
-    transform: scale(1.15);
-}
-
-/* ---- NOTIFICATION TOAST ---- */
+/* ---- TOAST ---- */
 
 .toast {
     position: fixed;
@@ -428,4 +377,12 @@ body {
 .toast.show {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
+}
+
+/* ---- SMALL SCREENS ---- */
+
+@media (max-width: 600px) {
+    :root { --palette-width: 150px; }
+    #header h1 { font-size: 1.1em; }
+    .bird-btn { font-size: 0.68em; padding: 3px 7px; }
 }

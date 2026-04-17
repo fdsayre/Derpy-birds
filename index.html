@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- SVG filter definitions for construction paper effect -->
     <svg style="position:absolute;width:0;height:0;overflow:hidden;">
         <defs>
             <filter id="paper-edge" x="-5%" y="-5%" width="110%" height="110%">
@@ -29,27 +28,30 @@
         </header>
 
         <main id="main">
-            <section id="scene">
-                <svg id="scene-svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice"></svg>
-            </section>
-
-            <section id="construction-area">
-                <div id="build-zone"></div>
-                <div id="ground-strip"></div>
-            </section>
-        </main>
-
-        <div id="palette">
-            <div id="palette-header">
-                <h3 id="palette-title">Choose a Bird!</h3>
-                <div id="orientation-controls">
-                    <button class="orient-btn active" data-orient="left">Left</button>
-                    <button class="orient-btn" data-orient="front">Front</button>
-                    <button class="orient-btn" data-orient="right">Right</button>
+            <!-- Palette: left column, never overlaps canvas -->
+            <aside id="palette">
+                <div id="palette-header">
+                    <h3 id="palette-title">Choose a Bird!</h3>
+                    <div id="orientation-controls">
+                        <button class="orient-btn active" data-orient="left">Left</button>
+                        <button class="orient-btn" data-orient="front">Front</button>
+                        <button class="orient-btn" data-orient="right">Right</button>
+                    </div>
                 </div>
+                <div id="parts-list"></div>
+            </aside>
+
+            <!-- Right panel: scene on top, grass/build area below -->
+            <div id="right-panel">
+                <section id="scene">
+                    <svg id="scene-svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice"></svg>
+                </section>
+                <section id="construction-area">
+                    <div id="build-zone"></div>
+                    <div id="ground-strip"></div>
+                </section>
             </div>
-            <div id="parts-list"></div>
-        </div>
+        </main>
 
         <footer id="controls">
             <button id="btn-clear" class="ctrl-btn">Clear</button>
