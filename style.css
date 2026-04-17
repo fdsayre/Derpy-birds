@@ -206,22 +206,23 @@ body {
     line-height: 1.2;
 }
 
-/* ---- RIGHT PANEL: scene on top, grass below ---- */
+/* ---- RIGHT PANEL: absolutely positioned children so % works on every device ---- */
 
 #right-panel {
     flex: 1;
-    display: flex;
-    flex-direction: column;
+    position: relative;   /* children use absolute % coords relative to THIS */
     overflow: hidden;
     min-width: 0;
 }
 
-/* ---- SCENE (sky + trees) ---- */
-
+/* Scene: top 50% of right panel — always beside the palette */
 #scene {
-    flex: 0 0 40%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
     background: linear-gradient(180deg, #87CEEB 0%, #A8D8EA 55%, #C5E8D0 82%, #7CB342 95%, #558B2F 100%);
-    position: relative;
     overflow: hidden;
     border-bottom: 3px solid #558B2F;
 }
@@ -232,13 +233,14 @@ body {
     display: block;
 }
 
-/* ---- CONSTRUCTION AREA (grass — where birds are built) ---- */
-
+/* Construction area: bottom 50% of right panel — the grass below the trees */
 #construction-area {
-    flex: 1;
-    position: relative;
-    /* overflow:hidden is the key — pieces can never bleed into the palette */
-    overflow: hidden;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;   /* pieces CANNOT bleed left into the palette */
     background:
         repeating-linear-gradient(
             0deg,

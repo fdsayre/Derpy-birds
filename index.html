@@ -41,15 +41,16 @@
                 <div id="parts-list"></div>
             </aside>
 
-            <!-- Right panel: scene on top, grass/build area below -->
+            <!-- Right panel: scene + build zone use absolute % so layout is
+                 identical on every device -->
             <div id="right-panel">
-                <section id="scene">
+                <div id="scene">
                     <svg id="scene-svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice"></svg>
-                </section>
-                <section id="construction-area">
+                </div>
+                <div id="construction-area">
                     <div id="build-zone"></div>
                     <div id="ground-strip"></div>
-                </section>
+                </div>
             </div>
         </main>
 
