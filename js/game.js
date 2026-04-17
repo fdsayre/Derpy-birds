@@ -8,11 +8,6 @@ var completedBirds = new Set();
 function selectBird(birdId) {
     if (STATE.isAnimating) return;
 
-    // If pieces are placed, warn/clear
-    if (STATE.placedPieces.length > 0) {
-        clearConstruction();
-    }
-
     STATE.currentBird = birdId;
     STATE.usedPieceIds.clear();
 
