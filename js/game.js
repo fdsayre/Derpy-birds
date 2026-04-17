@@ -30,11 +30,7 @@ function setOrientation(orient) {
 
     STATE.currentOrientation = orient;
 
-    // If pieces are placed, clear them for new orientation
-    if (STATE.placedPieces.length > 0) {
-        clearConstruction();
-    }
-
+    // Keep placed pieces - just refresh the palette with new orientation pieces
     STATE.usedPieceIds.clear();
 
     // Update orientation buttons
