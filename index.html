@@ -32,17 +32,11 @@
             <aside id="palette">
                 <div id="palette-header">
                     <h3 id="palette-title">Choose a Bird!</h3>
-                    <div id="orientation-controls">
-                        <button class="orient-btn active" data-orient="left">Left</button>
-                        <button class="orient-btn" data-orient="front">Front</button>
-                        <button class="orient-btn" data-orient="right">Right</button>
-                    </div>
                 </div>
                 <div id="parts-list"></div>
             </aside>
 
-            <!-- Right panel: scene + build zone use absolute % so layout is
-                 identical on every device -->
+            <!-- Right panel: flex column, scene top half + build area bottom half -->
             <div id="right-panel">
                 <div id="scene">
                     <svg id="scene-svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice"></svg>
@@ -56,10 +50,12 @@
 
         <footer id="controls">
             <button id="btn-clear" class="ctrl-btn">Clear</button>
+            <button id="btn-flip" class="ctrl-btn" disabled>Flip</button>
             <button id="btn-done" class="ctrl-btn btn-done" disabled>Done!</button>
         </footer>
     </div>
 
+    <script src="https://unpkg.com/moveable@0.53.0/dist/moveable.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/bird-magpie.js"></script>
     <script src="js/bird-jay.js"></script>

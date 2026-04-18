@@ -1,37 +1,51 @@
 // ==========================================
-// DERPY BIRDS - Drag & Drop System
+// DERPY BIRDS - Drag, Rotate & Scale (Moveable)
 // ==========================================
 
-var dragState = {
-    active: false,
-    element: null,
-    startX: 0,
-    startY: 0,
-    offsetX: 0,
-    offsetY: 0,
-    source: null  // 'palette' or 'placed'
-};
+var moveable = null;
 
 function initDragDrop() {
     var buildZone = document.getElementById('build-zone');
 
-    // Palette drag start
+    moveable = new Moveable(buildZone, {
+        target: null,
+        container: buildZone,
+        draggable: true,
+        rotatable: true,
+        scalable: true,
+        keepRatio: true,
+        renderDirections: ['nw', 'ne', 'sw', 'se'],
+        origin: false,
+        throttleDrag: 0,
+        throttleRotate: 0,
+        throttleScale: 0
+    });
+
+    moveable.on('drag', function(e) {
+        e.target.style.transform = e.transform;
+    });
+
+    moveable.on('rotate', function(e) {
+        e.target.style.transform = e.transform;
+    });
+
+    moveable.on('scale', function(e) {
+        e.target.style.transform = e.transform;
+    });
+
+    // Click palette items to spawn pieces
     document.getElementById('parts-list').addEventListener('pointerdown', function(e) {
         var item = e.target.closest('.part-item');
         if (!item || item.classList.contains('used') || STATE.isAnimating) return;
-
         e.preventDefault();
+
         var pieceId = item.dataset.pieceId;
-        var pieces = getPiecesForOrientation(STATE.currentBird, STATE.currentOrientation);
-        var piece = pieces.find(function(p) { return p.id === pieceId; });
+        var piece = findPieceById(STATE.currentBird, pieceId);
         if (!piece) return;
 
-        // Mark as used in palette
         STATE.usedPieceIds.add(pieceId);
         item.classList.add('used');
 
-        // Spawn piece at center of build zone so it's always visible,
-        // never hidden behind the palette
         var rect = buildZone.getBoundingClientRect();
         var x = rect.width / 2 - piece.width / 2;
         var y = rect.height / 2 - piece.height / 2;
@@ -41,80 +55,74 @@ function initDragDrop() {
         buildZone.appendChild(placed);
         STATE.placedPieces.push(placed);
 
-        // Start dragging immediately, offset from piece center
-        startDrag(placed, e, 'palette');
+        selectPiece(placed);
         updateDoneButton();
     });
 
-    // Placed piece drag start
+    // Click in build zone to select/deselect pieces
     buildZone.addEventListener('pointerdown', function(e) {
-        var placed = e.target.closest('.placed-piece');
-        if (!placed || STATE.isAnimating) return;
-        e.preventDefault();
+        if (e.target.closest('.moveable-control-box')) return;
 
-        // Bring to front on click
-        placed.style.zIndex = STATE.nextZ++;
-        startDrag(placed, e, 'placed');
+        var piece = e.target.closest('.placed-piece');
+        if (piece) {
+            e.preventDefault();
+            selectPiece(piece);
+        } else {
+            deselectPiece();
+        }
     });
 
-    // Drag move
-    document.addEventListener('pointermove', function(e) {
-        if (!dragState.active) return;
-        e.preventDefault();
-
-        var rect = buildZone.getBoundingClientRect();
-        var x = e.clientX - rect.left - dragState.offsetX;
-        var y = e.clientY - rect.top - dragState.offsetY;
-
-        // Constrain strictly to build zone - never slip behind palette
-        x = Math.max(0, Math.min(rect.width - 20, x));
-        y = Math.max(0, Math.min(rect.height - 20, y));
-
-        dragState.element.style.left = x + 'px';
-        dragState.element.style.top = y + 'px';
+    // Click outside build zone deselects (but not on Moveable controls or palette)
+    document.addEventListener('pointerdown', function(e) {
+        if (e.target.closest('#build-zone')) return;
+        if (e.target.closest('.moveable-control-box')) return;
+        if (e.target.closest('#parts-list')) return;
+        if (e.target.closest('#btn-flip')) return;
+        deselectPiece();
     });
 
-    // Drag end
-    document.addEventListener('pointerup', function(e) {
-        if (!dragState.active) return;
-        endDrag();
-    });
-
-    // Prevent context menu during drag
-    document.addEventListener('contextmenu', function(e) {
-        if (dragState.active) e.preventDefault();
+    // Flip button
+    document.getElementById('btn-flip').addEventListener('click', function() {
+        flipSelected();
     });
 }
 
-function startDrag(element, event, source) {
-    dragState.active = true;
-    dragState.element = element;
-    dragState.source = source;
+function selectPiece(piece) {
+    STATE.selectedPiece = piece;
+    piece.style.zIndex = STATE.nextZ++;
+    moveable.target = piece;
 
-    var rect = element.getBoundingClientRect();
-    var buildRect = document.getElementById('build-zone').getBoundingClientRect();
-
-    dragState.offsetX = event.clientX - rect.left;
-    dragState.offsetY = event.clientY - rect.top;
-
-    element.classList.add('dragging');
-    element.setPointerCapture(event.pointerId);
-    STATE.isDragging = true;
+    document.getElementById('btn-flip').disabled = false;
 }
 
-function endDrag() {
-    if (!dragState.active) return;
+function deselectPiece() {
+    STATE.selectedPiece = null;
+    moveable.target = null;
+    document.getElementById('btn-flip').disabled = true;
+}
 
-    dragState.element.classList.remove('dragging');
-    dragState.active = false;
-    dragState.element = null;
-    STATE.isDragging = false;
+function flipSelected() {
+    var piece = STATE.selectedPiece;
+    if (!piece) return;
+
+    var svg = piece.querySelector('svg');
+    if (!svg) return;
+
+    if (svg.dataset.flipped === '1') {
+        svg.style.transform = '';
+        svg.dataset.flipped = '0';
+    } else {
+        svg.style.transform = 'scaleX(-1)';
+        svg.dataset.flipped = '1';
+    }
+
+    moveable.updateRect();
 }
 
 function clearConstruction() {
+    deselectPiece();
     var buildZone = document.getElementById('build-zone');
 
-    // Remove all placed pieces
     STATE.placedPieces.forEach(function(p) {
         if (p.parentNode) p.parentNode.removeChild(p);
     });
@@ -122,8 +130,7 @@ function clearConstruction() {
     STATE.usedPieceIds.clear();
     STATE.nextZ = 10;
 
-    // Re-render palette to un-gray items
-    renderPalette(STATE.currentBird, STATE.currentOrientation);
+    renderPalette(STATE.currentBird);
     updateDoneButton();
 }
 

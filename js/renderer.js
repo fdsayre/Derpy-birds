@@ -2,7 +2,6 @@
 // DERPY BIRDS - SVG Piece Renderer
 // ==========================================
 
-// Create an SVG element from a piece definition
 function createPieceSVG(piece, scale) {
     scale = scale || 1;
     var svg = svgEl('svg', {
@@ -20,7 +19,6 @@ function createPieceSVG(piece, scale) {
     return svg;
 }
 
-// Create a palette item for a piece
 function createPaletteItem(piece, birdId) {
     var item = document.createElement('div');
     item.className = 'part-item';
@@ -29,7 +27,6 @@ function createPaletteItem(piece, birdId) {
 
     var preview = document.createElement('div');
     preview.className = 'part-preview';
-    // Scale to fit preview
     var maxDim = Math.max(piece.width, piece.height);
     var previewScale = Math.min(50 / maxDim, 1);
     preview.appendChild(createPieceSVG(piece, previewScale));
@@ -44,8 +41,23 @@ function createPaletteItem(piece, birdId) {
     return item;
 }
 
-// Render the palette for a given bird and orientation
-function renderPalette(birdId, orientation) {
+function getAllPieces(birdId) {
+    var bird = BIRDS[birdId];
+    if (!bird) return [];
+
+    var all = [];
+    var orientations = bird.orientations;
+    for (var orient in orientations) {
+        if (orientations.hasOwnProperty(orient)) {
+            orientations[orient].forEach(function(p) {
+                all.push(p);
+            });
+        }
+    }
+    return all;
+}
+
+function renderPalette(birdId) {
     var partsList = document.getElementById('parts-list');
     partsList.innerHTML = '';
 
@@ -57,48 +69,41 @@ function renderPalette(birdId, orientation) {
     var bird = BIRDS[birdId];
     document.getElementById('palette-title').textContent = bird.name;
 
-    var pieces = getPiecesForOrientation(birdId, orientation);
-    if (!pieces) return;
+    var orientations = bird.orientations;
+    var orientKeys = Object.keys(orientations);
 
-    pieces.forEach(function(piece) {
-        var item = createPaletteItem(piece, birdId);
-        if (STATE.usedPieceIds.has(piece.id)) {
-            item.classList.add('used');
-        }
-        partsList.appendChild(item);
+    orientKeys.forEach(function(orient) {
+        var heading = document.createElement('div');
+        heading.className = 'part-section-heading';
+        heading.textContent = orient === 'left' ? 'Side View' : 'Front View';
+        partsList.appendChild(heading);
+
+        orientations[orient].forEach(function(piece) {
+            var item = createPaletteItem(piece, birdId);
+            if (STATE.usedPieceIds.has(piece.id)) {
+                item.classList.add('used');
+            }
+            partsList.appendChild(item);
+        });
     });
 }
 
-// Get pieces for a given orientation (right = flipped left)
-function getPiecesForOrientation(birdId, orientation) {
-    var bird = BIRDS[birdId];
-    if (!bird) return null;
-
-    if (orientation === 'right') {
-        // Mirror left pieces
-        var leftPieces = bird.orientations.left;
-        return leftPieces.map(function(p) {
-            return Object.assign({}, p, { flipped: true });
-        });
-    }
-
-    return bird.orientations[orientation] || bird.orientations.left;
+function findPieceById(birdId, pieceId) {
+    var pieces = getAllPieces(birdId);
+    return pieces.find(function(p) { return p.id === pieceId; }) || null;
 }
 
-// Create a placed piece element in the construction area
 function createPlacedPiece(piece, x, y) {
     var div = document.createElement('div');
     div.className = 'placed-piece';
     div.dataset.pieceId = piece.id;
     div.dataset.layer = piece.layer;
+    div.style.position = 'absolute';
     div.style.left = x + 'px';
     div.style.top = y + 'px';
     div.style.zIndex = STATE.nextZ++;
 
     var svg = createPieceSVG(piece, 1);
-    if (piece.flipped) {
-        svg.style.transform = 'scaleX(-1)';
-    }
     div.appendChild(svg);
 
     return div;

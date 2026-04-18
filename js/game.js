@@ -2,7 +2,6 @@
 // DERPY BIRDS - Main Game Logic & Init
 // ==========================================
 
-// Track which birds have been completed at least once
 var completedBirds = new Set();
 
 function selectBird(birdId) {
@@ -11,29 +10,12 @@ function selectBird(birdId) {
     STATE.currentBird = birdId;
     STATE.usedPieceIds.clear();
 
-    // Update bird selector buttons
     document.querySelectorAll('.bird-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.dataset.birdId === birdId);
     });
 
-    renderPalette(birdId, STATE.currentOrientation);
+    renderPalette(birdId);
     updateDoneButton();
-}
-
-function setOrientation(orient) {
-    if (STATE.isAnimating) return;
-
-    STATE.currentOrientation = orient;
-
-    // Keep placed pieces - just refresh the palette with new orientation pieces
-    STATE.usedPieceIds.clear();
-
-    // Update orientation buttons
-    document.querySelectorAll('.orient-btn').forEach(function(btn) {
-        btn.classList.toggle('active', btn.dataset.orient === orient);
-    });
-
-    renderPalette(STATE.currentBird, orient);
 }
 
 function handleDone() {
@@ -42,18 +24,18 @@ function handleDone() {
     var birdId = STATE.currentBird;
     var birdName = BIRDS[birdId] ? BIRDS[birdId].name : 'Bird';
 
+    deselectPiece();
+
     flyToTree(function() {
-        // Mark bird as completed
         completedBirds.add(birdId);
         var btn = document.querySelector('.bird-btn[data-bird-id="' + birdId + '"]');
         if (btn) btn.classList.add('completed');
 
-        // Reset construction state
         STATE.placedPieces = [];
         STATE.usedPieceIds.clear();
         STATE.nextZ = 10;
 
-        renderPalette(STATE.currentBird, STATE.currentOrientation);
+        renderPalette(STATE.currentBird);
         updateDoneButton();
 
         showToast(birdName + ' flies to the trees!');
@@ -79,37 +61,17 @@ function createBirdButtons() {
 }
 
 function init() {
-    // Render scene (sky, trees)
     renderScene();
-
-    // Create bird selection buttons
     createBirdButtons();
 
-    // Set up orientation controls
-    document.querySelectorAll('.orient-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            setOrientation(btn.dataset.orient);
-        });
-    });
-
-    // Set up control buttons
     document.getElementById('btn-clear').addEventListener('click', function() {
         if (!STATE.isAnimating) clearConstruction();
     });
 
     document.getElementById('btn-done').addEventListener('click', handleDone);
 
-    // Initialize drag & drop
     initDragDrop();
-
-    // Show initial palette message
-    renderPalette(null, 'left');
-
-    // Handle window resize for scene
-    window.addEventListener('resize', function() {
-        // Scene SVG auto-scales via viewBox
-    });
+    renderPalette(null);
 }
 
-// Start the game
 document.addEventListener('DOMContentLoaded', init);

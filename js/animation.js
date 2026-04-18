@@ -9,7 +9,6 @@ function flyToTree(callback) {
     var buildZone = document.getElementById('build-zone');
     var buildRect = buildZone.getBoundingClientRect();
 
-    // Find an available perch spot
     var perch = null;
     for (var i = 0; i < PERCH_SPOTS.length; i++) {
         if (!PERCH_SPOTS[i].taken) {
@@ -19,51 +18,54 @@ function flyToTree(callback) {
         }
     }
     if (!perch) {
-        // All spots taken, reuse first
         perch = PERCH_SPOTS[0];
     }
 
-    // Calculate bounding box of all placed pieces
+    // Use getBoundingClientRect since Moveable manages transforms
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     STATE.placedPieces.forEach(function(p) {
-        var x = parseFloat(p.style.left);
-        var y = parseFloat(p.style.top);
-        var w = p.offsetWidth;
-        var h = p.offsetHeight;
+        var r = p.getBoundingClientRect();
+        var x = r.left - buildRect.left;
+        var y = r.top - buildRect.top;
         if (x < minX) minX = x;
         if (y < minY) minY = y;
-        if (x + w > maxX) maxX = x + w;
-        if (y + h > maxY) maxY = y + h;
+        if (x + r.width > maxX) maxX = x + r.width;
+        if (y + r.height > maxY) maxY = y + r.height;
     });
 
     var groupW = maxX - minX;
     var groupH = maxY - minY;
 
-    // Create a flying container with all pieces
     var flyer = document.createElement('div');
     flyer.className = 'flying-group';
     flyer.style.width = groupW + 'px';
     flyer.style.height = groupH + 'px';
 
-    // Move pieces into flyer, adjusting positions
+    // Clone pieces into flyer preserving their visual transforms
     STATE.placedPieces.forEach(function(p) {
-        var x = parseFloat(p.style.left) - minX;
-        var y = parseFloat(p.style.top) - minY;
-        p.style.left = x + 'px';
-        p.style.top = y + 'px';
-        p.classList.remove('dragging');
-        flyer.appendChild(p);
+        var r = p.getBoundingClientRect();
+        var clone = p.cloneNode(true);
+        clone.style.position = 'absolute';
+        clone.style.left = (r.left - buildRect.left - minX) + 'px';
+        clone.style.top = (r.top - buildRect.top - minY) + 'px';
+        clone.style.width = r.width + 'px';
+        clone.style.height = r.height + 'px';
+        clone.style.transform = '';
+        flyer.appendChild(clone);
+    });
+
+    // Remove originals from build zone
+    STATE.placedPieces.forEach(function(p) {
+        if (p.parentNode) p.parentNode.removeChild(p);
     });
 
     document.body.appendChild(flyer);
 
-    // Starting position (construction area coordinates to page coordinates)
     var startX = buildRect.left + minX;
     var startY = buildRect.top + minY;
     flyer.style.left = startX + 'px';
     flyer.style.top = startY + 'px';
 
-    // Target position (scene coordinates)
     var sceneSvg = document.getElementById('scene-svg');
     var sceneRect = sceneSvg.getBoundingClientRect();
     var scaleX = sceneRect.width / 1200;
@@ -71,7 +73,6 @@ function flyToTree(callback) {
     var targetX = sceneRect.left + perch.x * scaleX - groupW * 0.2;
     var targetY = sceneRect.top + perch.y * scaleY - groupH * 0.2;
 
-    // Animate
     var duration = 1500;
     var startTime = null;
     var finalScale = 0.35;
@@ -81,17 +82,11 @@ function flyToTree(callback) {
         var elapsed = timestamp - startTime;
         var t = Math.min(elapsed / duration, 1);
 
-        // Ease out cubic
         var ease = 1 - Math.pow(1 - t, 3);
 
-        // Position interpolation
         var curX = startX + (targetX - startX) * ease;
         var curY = startY + (targetY - startY) * ease;
-
-        // Scale interpolation
         var scale = 1 + (finalScale - 1) * ease;
-
-        // Wobble for "flapping" effect
         var wobble = Math.sin(t * Math.PI * 6) * (1 - t) * 8;
 
         flyer.style.left = curX + 'px';
@@ -101,7 +96,6 @@ function flyToTree(callback) {
         if (t < 1) {
             requestAnimationFrame(animate);
         } else {
-            // Animation complete - add bird to scene as perched
             addPerchedBird(perch, flyer, groupW, groupH);
             flyer.remove();
             STATE.isAnimating = false;
@@ -116,7 +110,6 @@ function addPerchedBird(perch, flyer, groupW, groupH) {
     var sceneSvg = document.getElementById('scene-svg');
     var scale = 0.35;
 
-    // Create a foreignObject to embed the HTML pieces in SVG
     var fo = svgEl('foreignObject', {
         x: perch.x - groupW * scale / 2,
         y: perch.y - groupH * scale / 2,
@@ -132,11 +125,9 @@ function addPerchedBird(perch, flyer, groupW, groupH) {
     container.style.transform = 'scale(' + scale + ')';
     container.style.transformOrigin = 'top left';
 
-    // Clone pieces from flyer
     var pieces = flyer.querySelectorAll('.placed-piece');
     pieces.forEach(function(p) {
         var clone = p.cloneNode(true);
-        clone.classList.remove('dragging', 'selected');
         clone.style.cursor = 'default';
         container.appendChild(clone);
     });

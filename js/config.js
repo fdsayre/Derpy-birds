@@ -16,12 +16,12 @@ const COMPLETED_BIRDS = [];
 // Game state
 const STATE = {
     currentBird: null,
-    currentOrientation: 'left',
     placedPieces: [],       // pieces in construction area
     usedPieceIds: new Set(), // track which palette pieces are used
     nextZ: 10,              // z-index counter for layering
     isDragging: false,
-    isAnimating: false
+    isAnimating: false,
+    selectedPiece: null     // currently selected piece element
 };
 
 // Helper: create SVG element with attributes
